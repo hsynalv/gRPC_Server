@@ -21,8 +21,7 @@ namespace grpcServer.Services
         //}
 
         #endregion
-
-
+        
         #region Server Stream RPC
 
         //public override async Task SendMessage(MessageRequest request,
@@ -42,18 +41,48 @@ namespace grpcServer.Services
 
         #endregion
 
-        public override async Task<MessageResponse> SendMessage(IAsyncStreamReader<MessageRequest> requestStream, ServerCallContext context)
-        {
+        #region Client Stream RPC
 
-            while (await requestStream.MoveNext(context.CancellationToken))
+        //public override async Task<MessageResponse> SendMessage(IAsyncStreamReader<MessageRequest> requestStream, ServerCallContext context)
+        //{
+
+        //    while (await requestStream.MoveNext(context.CancellationToken))
+        //    {
+        //        Console.WriteLine($"Message : {requestStream.Current.Message} | Name: {requestStream.Current.Name}");
+        //    }
+
+        //    return new MessageResponse()
+        //    {
+        //        Message = "Veri alınmıştır..."
+        //    };
+        //}
+
+        #endregion
+
+        #region Bi-directional Streaming RPC
+
+        public override async Task SendMessage(IAsyncStreamReader<MessageRequest> requestStream, IServerStreamWriter<MessageResponse> responseStream, ServerCallContext context)
+        {
+            var requestTask =  Task.Run(async () =>
             {
-                Console.WriteLine($"Message : {requestStream.Current.Message} | Name: {requestStream.Current.Name}");
+                while (await requestStream.MoveNext(context.CancellationToken))
+                {
+                    Console.WriteLine($"Message : {requestStream.Current.Message} | Name: {requestStream.Current.Name}");
+                }
+            });
+
+            for (int i = 0; i < 10; i++)
+            {
+                await Task.Delay(1000);
+                await responseStream.WriteAsync(new MessageResponse()
+                {
+                    Message = "Message " + i
+                });
             }
 
-            return new MessageResponse()
-            {
-                Message = "Veri alınmıştır..."
-            };
+            await requestTask;
         }
+
+        #endregion
     }
 }

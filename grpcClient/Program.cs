@@ -25,7 +25,6 @@ var channel = GrpcChannel.ForAddress("https://localhost:5001");
 
 #endregion
 
-
 #region Server Streaming RPC
 
 //var messageClient = new Message.MessageClient(channel);
@@ -46,26 +45,51 @@ var channel = GrpcChannel.ForAddress("https://localhost:5001");
 
 #region Client Streaming RPC
 
-var messageClient = new Message.MessageClient(channel);
-var request = messageClient.SendMessage();
-for (int i = 0; i < 10; i++)
-{
-    await Task.Delay(1000);
-    await request.RequestStream.WriteAsync(new MessageRequest()
-    {
-        Name = "beyazskorsky",
-        Message = "Mesaj" + i
-    });
-}
+//var messageClient = new Message.MessageClient(channel);
+//var request = messageClient.SendMessage();
+//for (int i = 0; i < 10; i++)
+//{
+//    await Task.Delay(1000);
+//    await request.RequestStream.WriteAsync(new MessageRequest()
+//    {
+//        Name = "beyazskorsky",
+//        Message = "Mesaj" + i
+//    });
+//}
 
-await request.RequestStream.CompleteAsync();
-Console.WriteLine(request.ResponseAsync.Result.Message);
-//Console.WriteLine((await request.ResponseAsync).Message);
+//await request.RequestStream.CompleteAsync();
+//Console.WriteLine(request.ResponseAsync.Result.Message);
+////Console.WriteLine((await request.ResponseAsync).Message);
 
 
 #endregion
 
+#region Bi-directional Streaming RPC
 
+var messageClient = new Message.MessageClient(channel);
+var request = messageClient.SendMessage();
+var requestTask = Task.Run(async () =>
+{
+    for (int i = 0; i < 10; i++)
+    {
+        await Task.Delay(1000);
+        await request.RequestStream.WriteAsync(new MessageRequest()
+        {
+            Name = "beyazskorsky",
+            Message = "Mesaj" + i
+        });
+    }
+});
+
+while (await request.ResponseStream.MoveNext(new CancellationTokenSource().Token))
+{
+    Console.WriteLine(request.ResponseStream.Current);
+}
+
+await requestTask;
+await request.RequestStream.CompleteAsync();
+
+#endregion
 
 
 Console.ReadKey();
