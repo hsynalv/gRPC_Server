@@ -6,7 +6,7 @@ package message;
 
 service Message {
 
-  rpc SendMessage(MessageRequest) returns (MessageResponse);
+  rpc SendMessage(MessageRequest) returns (stream MessageResponse);
 
 }
 
