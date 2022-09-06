@@ -26,18 +26,46 @@ var channel = GrpcChannel.ForAddress("https://localhost:5001");
 #endregion
 
 
+#region Server Streaming RPC
+
+//var messageClient = new Message.MessageClient(channel);
+//var response = messageClient.SendMessage(new MessageRequest()
+//{
+//    Message = "Bu bir mesaj gönderme denemesidir",
+//    Name = "beyazskorsky"
+//});
+
+//CancellationTokenSource tokenSource = new();
+
+//while (await response.ResponseStream.MoveNext(tokenSource.Token))
+//{
+//    Console.WriteLine(response.ResponseStream.Current);
+//}
+
+#endregion
+
+#region Client Streaming RPC
+
 var messageClient = new Message.MessageClient(channel);
-var response = messageClient.SendMessage(new MessageRequest()
+var request = messageClient.SendMessage();
+for (int i = 0; i < 10; i++)
 {
-    Message = "Bu bir mesaj gönderme denemesidir",
-    Name = "beyazskorsky"
-});
-
-CancellationTokenSource tokenSource = new();
-
-while (await response.ResponseStream.MoveNext(tokenSource.Token))
-{
-    Console.WriteLine(response.ResponseStream.Current);
+    await Task.Delay(1000);
+    await request.RequestStream.WriteAsync(new MessageRequest()
+    {
+        Name = "beyazskorsky",
+        Message = "Mesaj" + i
+    });
 }
+
+await request.RequestStream.CompleteAsync();
+Console.WriteLine(request.ResponseAsync.Result.Message);
+//Console.WriteLine((await request.ResponseAsync).Message);
+
+
+#endregion
+
+
+
 
 Console.ReadKey();

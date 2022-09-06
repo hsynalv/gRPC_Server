@@ -6,7 +6,7 @@ package message;
 
 service Message {
 
-  rpc SendMessage(MessageRequest) returns (stream MessageResponse); // dönüş değeri için veri tipinden önce stream anahtar kelimesi kullanılırsa ilgili verini server stream yapılacağı anlamına gelir
+  rpc SendMessage(stream MessageRequest) returns (MessageResponse); 
 
 }
 
